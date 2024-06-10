@@ -41,17 +41,20 @@ class MatrixModule(BotModule):
         if not self.host:
             return await bot.send_text(room, f'No minecraft host info set!')
 
-        try:
-            server = JavaServer.lookup(f'{self.host}:{self.port}')
-            status = server.status()
-            latency = server.ping()
-            #query = server.query()
-            await bot.send_text(room, f'{self.host}:{self.port} (ping: {latency}ms) {status.players.online} players.')
-            #await bot.send_text(room, f"{', '.join(query.players.names)}")
-        except:
-            self.logger.error(f"room: {room.name}: mc_ping failed.")
-            await bot.send_text(room, f'Could not get minecraft server info.')
 
+        server = JavaServer.lookup(f'{self.host}:{self.port}')
+        status = server.status()
+        if status:
+            latency = round(server.ping(),0)
+            if status.players.online > 0 :
+                await bot.send_text(room, f'{self.host}:{self.port} (ping: {latency}ms) {status.players.online} player:')
+                query = server.query()
+                if query:
+                    await bot.send_text(room, f"{', '.join(query.players.names)}")
+            else:
+                await bot.send_text(room, f'{self.host}:{self.port} (ping: {latency}ms) {status.players.online} player')
+        else:
+            await bot.send_text(room, f'Could not get minecraft server info.')
 
     def help(self):
         return 'Show info about a minecraft server'
